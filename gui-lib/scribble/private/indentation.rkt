@@ -353,8 +353,18 @@
     (if (and at-sign-posi
              (not (equal? 'white-space (list-ref classify-lst (sub1 (- at-sign-posi start))))))
         at-sign-posi
-        (for/first ([posi (in-range width (- len 1))] 
-                    #:when (equal? 'text (list-ref classify-lst posi)))
+        (let-values ([(posi _tiq?)
+                      (for/fold
+                       ((ret #f) (text-in-quotes? #f))
+                       ([posi (in-range width (- len 1))]
+                        #:break ret)
+                        (define cls (list-ref classify-lst posi))
+                        (cond
+                          [(and (eq? 'parenthesis cls) (equal? #\" (send text get-character posi)))
+                           (values ret (not text-in-quotes?))]
+                          [(and (not text-in-quotes?) (eq? 'text cls))
+                           (values posi text-in-quotes?)]
+                          [else (values #f text-in-quotes?)]))])
           posi))))
 
 ;;adjust-spaces for text
@@ -671,6 +681,13 @@
                   (adjust-para-width t 21 9) 
                   (send t get-text))
                 "#lang scribble/base\na b c d \n@e{} f g\n")
+                
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@author+email[\"mrxxxyyyyyyyesqIII\"]{xxx.yyyyyyy@foocorp.co.uk}\n")
+                  (paragraph-indentation t 39 14)
+                  (send t get-text))
+                "#lang scribble/base\n\n@author+email[\"mrxxxyyyyyyyesqIII\"]{xxx.yyyyyyy@foocorp.co.uk}\n")
+  
   
   ;;test insert-break
   (check-equal? (let ((t (new racket:text%)))

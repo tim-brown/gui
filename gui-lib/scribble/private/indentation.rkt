@@ -355,7 +355,7 @@
         at-sign-posi
         (for/first ([posi (in-range width (- len 1))] 
                     #:when (equal? 'text (list-ref classify-lst posi)))
-          posi))))
+          (+ start posi)))))
 
 ;;adjust-spaces for text
 ;;(adjust-spaces : a-racket:text para amount posi) → boolean?
@@ -640,6 +640,12 @@
                   (paragraph-indentation t 39 14)
                   (send t get-text))
                 "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n c}\n\n")
+               
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@subsubsubsubsection[#:tag \"mrxxxyyyyyyyesqIII\"]{x}\n")
+                  (paragraph-indentation t 39 14)
+                  (send t get-text))
+                "#lang scribble/base\n\n@subsubsubsubsection[#:tag \"mrxxxyyyyyyyesqIII\"]{\n x}\n")
   
   ;;test case for adjust paragraph width
   (check-equal? (let ([t (new racket:text%)])
